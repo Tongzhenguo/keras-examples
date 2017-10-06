@@ -51,8 +51,10 @@ model = Sequential()
 model.add(Embedding(max_features,128,embeddings_initializer='uniform'))
 model.add(SpatialDropout1D(rate=0.2))
 # LSTM层，输出维度128，可以尝试着换成 GRU 试试
+
+
 model.add(LSTM(128, dropout_W=0.2, dropout_U=0.2,activation='tanh'
-               ,kernel_initializer='glorot_uniform',recurrent_initializer='orthogonal',dropout=0.2))  # try using a GRU instead, for fun
+               ,kernel_initializer='glorot_uniform',recurrent_initializer='orthogonal'))  # try using a GRU instead, for fun
 model.add(Dense(1))   # 单神经元全连接层
 model.add(Activation('sigmoid'))   # sigmoid 激活函数层
 
@@ -64,9 +66,9 @@ model.compile(loss='binary_crossentropy',
               optimizer='adam',
               metrics=['accuracy'])
 
-# 训练，迭代 15 次，使用测试集做验证（真正实验时最好不要这样做）
+# 训练
 print('Train...')
-model.fit(X_train, y_train, batch_size=batch_size, epochs=15,
+model.fit(X_train, y_train, batch_size=batch_size, epochs=3,
           validation_data=(X_test, y_test))
 
 # 评估误差和准确率
