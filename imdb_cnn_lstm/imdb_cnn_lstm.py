@@ -61,14 +61,17 @@ print('X_test shape:', X_test.shape)
 print('Build model...')
 # 构建模型
 model = Sequential()
-model.add(Embedding(max_features, embedding_size, input_length=maxlen))  # 词嵌入层
-model.add(Dropout(0.25))       # Dropout层
+# 词嵌入层
+model.add(Embedding(max_features, embedding_size, input_length=maxlen))
+# Dropout层
+model.add(Dropout(0.25))
 
 # 1D 卷积层，对词嵌入层输出做卷积操作
 model.add(Convolution1D(nb_filter=nb_filter,
                         filter_length=filter_length,
                         border_mode='valid',
                         activation='relu',
+                        kernel_initializer='glorot_uniform',
                         subsample_length=1))
 # 池化层
 model.add(MaxPooling1D(pool_length=pool_length))
@@ -85,7 +88,7 @@ model.compile(loss='binary_crossentropy',
               metrics=['accuracy'])
 # 训练
 print('Train...')
-model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=nb_epoch,
+model.fit(X_train, y_train, batch_size=batch_size, epochs=nb_epoch,
           validation_data=(X_test, y_test))
 
 # 测试

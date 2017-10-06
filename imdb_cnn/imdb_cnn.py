@@ -12,14 +12,16 @@ Gets to 0.89 test accuracy after 2 epochs.
 '''
 
 from __future__ import print_function
+
 import numpy as np
+
 np.random.seed(1337)  # for reproducibility
 
 from keras.preprocessing import sequence
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation
+from keras.layers import Dense, Dropout, Activation, Conv1D, SpatialDropout1D
 from keras.layers import Embedding
-from keras.layers import Convolution1D, GlobalMaxPooling1D
+from keras.layers import GlobalMaxPooling1D
 from keras.datasets import imdb
 
 
@@ -35,11 +37,12 @@ nb_epoch = 10        # 迭代次数
 
 # 载入 imdb 数据
 print('Loading data...')
-(X_train, y_train), (X_test, y_test) = imdb.load_data(nb_words=max_features)
+# 输入Numpy array,行是一篇文档，列是词索引（0标识跳过或者填充词，1标识文档开始,2标识不在词典内的留出词，3才是真正词典的开始索引）
+(X_train, y_train), (X_test, y_test) = imdb.load_data(num_words=max_features)
 print(len(X_train), 'train sequences')
 print(len(X_test), 'test sequences')
 
-# 样本填充到固定长度 maxlen，在每个样本前补 0 
+# 样本填充到固定长度 maxlen，在每个样本前补 0
 print('Pad sequences (samples x time)')
 X_train = sequence.pad_sequences(X_train, maxlen=maxlen)
 X_test = sequence.pad_sequences(X_test, maxlen=maxlen)
@@ -55,16 +58,16 @@ model = Sequential()
 # 先从一个高效的嵌入层开始，它将词汇的索引值映射为 embedding_dims 维度的词向量
 model.add(Embedding(max_features,
                     embedding_dims,
-                    input_length=maxlen,
-                    dropout=0.2))
-
+                    input_length=maxlen))
+model.add(Dropout(0.2))       # Dropout层
 # we add a Convolution1D, which will learn nb_filter
 # word group filters of size filter_length:
 # 添加一个 1D 卷积层，它将学习 nb_filter 个 filter_length 大小的词组卷积核
-model.add(Convolution1D(nb_filter=nb_filter,
+model.add(Conv1D(nb_filter=nb_filter,
                         filter_length=filter_length,
                         border_mode='valid',
                         activation='relu',
+                        kernel_initializer='glorot_uniform',
                         subsample_length=1))
 # we use max pooling:
 # 使用最大池化
@@ -91,5 +94,10 @@ model.compile(loss='binary_crossentropy',
 # 训练，迭代 nb_epoch 次
 model.fit(X_train, y_train,
           batch_size=batch_size,
-          nb_epoch=nb_epoch,
+          epochs=nb_epoch,
           validation_data=(X_test, y_test))
+
+# 测试
+score, acc = model.evaluate(X_test, y_test, batch_size=batch_size)
+print('Test score:', score)
+print('Test accuracy:', acc)

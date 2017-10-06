@@ -20,7 +20,7 @@ np.random.seed(1337)  # for reproducibility
 
 from keras.preprocessing import sequence
 from keras.models import Sequential
-from keras.layers import Dense, Activation, Embedding
+from keras.layers import Dense, Activation, Embedding, SpatialDropout1D
 from keras.layers import LSTM
 from keras.datasets import imdb
 
@@ -33,7 +33,7 @@ batch_size = 32   # 批数据量大小
 
 # 载入数据
 print('Loading data...')
-(X_train, y_train), (X_test, y_test) = imdb.load_data(nb_words=max_features)
+(X_train, y_train), (X_test, y_test) = imdb.load_data(num_words=max_features)
 print(len(X_train), 'train sequences')
 print(len(X_test), 'test sequences')
 
@@ -48,9 +48,11 @@ print('X_test shape:', X_test.shape)
 print('Build model...')
 model = Sequential()
 # 嵌入层，每个词维度为128
-model.add(Embedding(max_features, 128, dropout=0.2))
+model.add(Embedding(max_features,128,embeddings_initializer='uniform'))
+model.add(SpatialDropout1D(rate=0.2))
 # LSTM层，输出维度128，可以尝试着换成 GRU 试试
-model.add(LSTM(128, dropout_W=0.2, dropout_U=0.2))  # try using a GRU instead, for fun
+model.add(LSTM(128, dropout_W=0.2, dropout_U=0.2,activation='tanh'
+               ,kernel_initializer='glorot_uniform',recurrent_initializer='orthogonal',dropout=0.2))  # try using a GRU instead, for fun
 model.add(Dense(1))   # 单神经元全连接层
 model.add(Activation('sigmoid'))   # sigmoid 激活函数层
 
@@ -64,7 +66,7 @@ model.compile(loss='binary_crossentropy',
 
 # 训练，迭代 15 次，使用测试集做验证（真正实验时最好不要这样做）
 print('Train...')
-model.fit(X_train, y_train, batch_size=batch_size, nb_epoch=15,
+model.fit(X_train, y_train, batch_size=batch_size, epochs=15,
           validation_data=(X_test, y_test))
 
 # 评估误差和准确率
